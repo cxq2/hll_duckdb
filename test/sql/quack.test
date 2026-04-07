@@ -21,3 +21,43 @@ query I
 SELECT quack_openssl_version('Michael') ILIKE 'Quack Michael, my linked OpenSSL version is OpenSSL%';
 ----
 true
+
+# HLL create aggregate -> BLOB sketch
+statement ok
+CREATE TABLE raw_data AS SELECT range::VARCHAR AS id FROM range(10000);
+
+statement ok
+CREATE TABLE sketches AS SELECT hll_create_agg(id) AS hll_sketch FROM raw_data;
+
+query I
+SELECT hll_estimate(hll_sketch) BETWEEN 9800 AND 10200 FROM sketches;
+----
+true
+
+# Split into multiple sketches for merge testing
+statement ok
+CREATE TABLE sketch_parts AS
+SELECT CASE WHEN CAST(id AS BIGINT) < 5000 THEN 0 ELSE 1 END AS part, hll_create_agg(id) AS sketch
+FROM raw_data
+GROUP BY 1
+ORDER BY 1;
+
+# Scalar merge: merge two sketches into one sketch
+query I
+SELECT hll_estimate(hll_merge(a.sketch, b.sketch)) BETWEEN 9800 AND 10200
+FROM sketch_parts a, sketch_parts b
+WHERE a.part = 0 AND b.part = 1;
+----
+true
+
+# Aggregate merge: merge a column of sketches
+query I
+SELECT hll_estimate(hll_merge_agg(sketch)) BETWEEN 9800 AND 10200 FROM sketch_parts;
+----
+true
+
+# Optional serialization helpers round-trip a sketch
+query I
+SELECT hll_estimate(hll_deserialize(hll_serialize(hll_sketch))) BETWEEN 9800 AND 10200 FROM sketches;
+----
+true
