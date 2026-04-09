@@ -61,3 +61,93 @@ query I
 SELECT hll_estimate(hll_deserialize(hll_serialize(hll_sketch))) BETWEEN 9800 AND 10200 FROM sketches;
 ----
 true
+
+# ----------------------------------------------------------------------
+# Role A regression coverage requested by Role B integration tests
+# ----------------------------------------------------------------------
+
+# 1) Sparse mode behavior (~100 distinct values)
+statement ok
+CREATE TABLE sparse_mode_data AS
+SELECT (range % 100)::VARCHAR AS id
+FROM range(20000);
+
+query I
+WITH estimate AS (
+  SELECT hll_estimate(hll_create_agg(id)) AS est
+  FROM sparse_mode_data
+)
+SELECT abs(est - 100)::DOUBLE / 100 < 0.02
+FROM estimate;
+----
+true
+
+# 2) Sparse-to-Dense promotion boundary trigger (6000 distinct values)
+statement ok
+CREATE TABLE promotion_6000_data AS
+SELECT range::VARCHAR AS id
+FROM range(6000);
+
+query I
+WITH estimate AS (
+  SELECT hll_estimate(hll_create_agg(id)) AS est
+  FROM promotion_6000_data
+)
+SELECT abs(est - 6000)::DOUBLE / 6000 < 0.02
+FROM estimate;
+----
+true
+
+# 3a) Merge strategy: Sparse + Sparse (<1000 distinct each)
+query I
+WITH s1 AS (
+  SELECT hll_create_agg(i::VARCHAR) AS sketch
+  FROM range(0, 800) t(i)
+),
+s2 AS (
+  SELECT hll_create_agg(i::VARCHAR) AS sketch
+  FROM range(800, 1600) t(i)
+),
+merged AS (
+  SELECT hll_estimate(hll_merge((SELECT sketch FROM s1), (SELECT sketch FROM s2))) AS est
+)
+SELECT abs(est - 1600)::DOUBLE / 1600 < 0.02
+FROM merged;
+----
+true
+
+# 3b) Merge strategy: Sparse + Dense
+query I
+WITH sparse_sketch AS (
+  SELECT hll_create_agg(i::VARCHAR) AS sketch
+  FROM range(0, 800) t(i)
+),
+dense_sketch AS (
+  SELECT hll_create_agg(i::VARCHAR) AS sketch
+  FROM range(800, 6800) t(i)
+),
+merged AS (
+  SELECT hll_estimate(hll_merge((SELECT sketch FROM sparse_sketch), (SELECT sketch FROM dense_sketch))) AS est
+)
+SELECT abs(est - 6800)::DOUBLE / 6800 < 0.02
+FROM merged;
+----
+true
+
+# 3c) Merge strategy: Dense + Dense
+query I
+WITH d1 AS (
+  SELECT hll_create_agg(i::VARCHAR) AS sketch
+  FROM range(0, 6000) t(i)
+),
+d2 AS (
+  SELECT hll_create_agg(i::VARCHAR) AS sketch
+  FROM range(6000, 12000) t(i)
+),
+merged AS (
+  SELECT hll_estimate(hll_merge((SELECT sketch FROM d1), (SELECT sketch FROM d2))) AS est
+)
+SELECT abs(est - 12000)::DOUBLE / 12000 < 0.02
+FROM merged;
+----
+true
