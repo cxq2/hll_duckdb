@@ -1,17 +1,18 @@
-# DuckDB HLL Extension (`quack`)
+# DuckDB HLL Extension
 
-This repository contains a DuckDB extension that adds reusable HyperLogLog
-(HLL) sketches as SQL-level objects.
+This repository is our DuckDB extension project for reusable HyperLogLog
+(HLL) sketches.
 
-The key difference from DuckDB's built-in approximate distinct support is that
-this extension exposes sketches as `BLOB` values that can be:
+The main point is different from DuckDB built-in approximate distinct.
+Built-in function gives one final number. Our extension gives sketch objects as
+`BLOB`, so they can be:
 
 - created with `hll_create_agg(...)`
 - stored in tables
 - merged later with `hll_merge(...)` or `hll_merge_agg(...)`
 - converted back to estimates with `hll_estimate(...)`
 
-This repository includes:
+This repo includes:
 
 - the HLL extension implementation
 - SQL regression tests for Role B
@@ -21,17 +22,17 @@ This repository includes:
 ## Repository Layout
 
 - `src/quack_extension.cpp`
-  DuckDB function registration and aggregate/scalar function bindings.
+  DuckDB function registration and bindings.
 - `src/hll/`
-  HLL core implementation used by the extension.
+  HLL core code used by the extension.
 - `test/sql/quack.test`
-  SQL regression tests, including sparse/dense merge cases.
+  SQL tests, including sparse/dense merge cases.
 - `benchmark/tpch_hll_eval.py`
-  Accuracy and runtime evaluation against `COUNT(DISTINCT)`.
+  Accuracy and runtime test against `COUNT(DISTINCT)`.
 - `benchmark/merge_workflow_eval.py`
-  Pre-aggregate and merge-workflow validation.
+  Pre-aggregate and merge workflow test.
 - `benchmark/sketch_workflow_demo.py`
-  Small synthetic demo showing sketches as reusable SQL `BLOB` objects.
+  Small demo for reusable sketch `BLOB` objects.
 
 ## Prerequisites
 
@@ -41,19 +42,19 @@ Required tools:
 - Python 3
 - Git submodule support
 
-After cloning, initialize the DuckDB submodule:
+After clone, initialize the DuckDB submodule:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-If you are cloning from scratch, the safest option is:
+If you clone from scratch, this is the safer way:
 
 ```bash
 git clone --recurse-submodules <repo-url>
 ```
 
-Python packages for benchmark and demo scripts:
+Install Python packages for benchmark and demo:
 
 ```bash
 python3 -m pip install -r benchmark/requirements.txt
@@ -61,34 +62,34 @@ python3 -m pip install -r benchmark/requirements.txt
 
 ## Build
 
-From the repository root:
+Run from repository root:
 
 ```bash
 make -j4
 ```
 
-This produces:
+This will generate:
 
 - `build/release/duckdb`
 - `build/release/extension/quack/quack.duckdb_extension`
 
 ## Verify The Extension
 
-Run the SQL regression test suite:
+Run SQL regression tests:
 
 ```bash
 make test
 ```
 
-The expected result is that all assertions pass.
+Expected result: all assertions pass.
 
-You can also do a minimal manual check:
+You can also do a small manual check:
 
 ```bash
 ./build/release/duckdb -unsigned
 ```
 
-Then run:
+Then run this SQL:
 
 ```sql
 SELECT hll_estimate(hll_create_agg(v::VARCHAR))
@@ -97,11 +98,11 @@ FROM (SELECT * FROM range(1000)) t(v);
 
 ## Benchmark And Evaluation
 
-Benchmark instructions are documented in:
+Benchmark details are in:
 
 - `benchmark/README.md`
 
-Typical quick verification commands:
+Quick benchmark check:
 
 ```bash
 python3 benchmark/tpch_hll_eval.py --scale-factors 1 --iterations 1 --threads 1
@@ -110,17 +111,17 @@ python3 benchmark/merge_workflow_eval.py --scale-factor 1 --iterations 1 --threa
 
 ## Small Demo For Presentation
 
-To generate a small local demo that shows why stored sketches matter:
+To make a small demo for presentation:
 
 ```bash
 python3 benchmark/sketch_workflow_demo.py
 ```
 
-This creates a raw table, a stored sketch table, and output artifacts under:
+This creates a raw table, a sketch table, and output files in:
 
 - `benchmark/out/sketch_workflow_demo/`
 
-The demo shows that one can:
+The demo shows:
 
 - create sketches once
 - store them as `BLOB` values in SQL tables
