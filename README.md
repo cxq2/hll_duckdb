@@ -83,7 +83,7 @@ From the repository root:
 make -j4
 ```
 
-This could produce:
+This can produce:
 
 - `build/release/duckdb`
 - `build/release/extension/quack/quack.duckdb_extension`
