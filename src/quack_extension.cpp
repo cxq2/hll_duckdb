@@ -10,9 +10,6 @@
 
 #include "hll/hll.h"
 
-// OpenSSL linked through vcpkg
-#include <openssl/opensslv.h>
-
 #include <cstdint>
 #include <exception>
 #include <vector>
@@ -126,14 +123,6 @@ inline void QuackScalarFun(DataChunk &args, ExpressionState &, Vector &result) {
 	});
 }
 
-inline void QuackOpenSSLVersionScalarFun(DataChunk &args, ExpressionState &, Vector &result) {
-	auto &name_vector = args.data[0];
-	UnaryExecutor::Execute<string_t, string_t>(name_vector, result, args.size(), [&](string_t name) {
-		return StringVector::AddString(result, "Quack " + name.GetString() + ", my linked OpenSSL version is " +
-		                                           OPENSSL_VERSION_TEXT);
-	});
-}
-
 inline void HLLEstimateScalarFun(DataChunk &args, ExpressionState &, Vector &result) {
 	auto &blob_vector = args.data[0];
 	UnaryExecutor::Execute<string_t, int64_t>(blob_vector, result, args.size(), [&](string_t blob) {
@@ -172,9 +161,6 @@ inline void HLLDeserializeScalarFun(DataChunk &args, ExpressionState &, Vector &
 
 static void LoadInternal(ExtensionLoader &loader) {
 	loader.RegisterFunction(ScalarFunction("quack", {LogicalType::VARCHAR}, LogicalType::VARCHAR, QuackScalarFun));
-
-	loader.RegisterFunction(ScalarFunction("quack_openssl_version", {LogicalType::VARCHAR}, LogicalType::VARCHAR,
-	                                     QuackOpenSSLVersionScalarFun));
 
 	auto hll_create_agg =
 	    AggregateFunction::UnaryAggregateDestructor<HLLState, string_t, string_t, HLLCreateAggOperation>(

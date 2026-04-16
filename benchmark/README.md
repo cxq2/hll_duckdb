@@ -31,6 +31,28 @@ python3 benchmark/tpch_hll_eval.py --scale-factors 1 --iterations 1 --threads 1
 python3 benchmark/merge_workflow_eval.py --scale-factor 1 --iterations 1 --threads 1
 ```
 
+## Small Demo
+
+Generate a compact demo artifact for rehearsal, screen recording, or slides:
+
+```bash
+python3 benchmark/sketch_workflow_demo.py
+```
+
+This creates:
+
+- `benchmark/out/sketch_workflow_demo/sketch_workflow_demo.md`
+- `benchmark/out/sketch_workflow_demo/sketch_workflow_demo.json`
+- `benchmark/out/sketch_workflow_demo/sketch_workflow_demo.png`
+
+The demo avoids `dbgen` and external downloads. It uses a small synthetic table
+to show the core workflow:
+
+- create sketches
+- store sketches in a SQL table as `BLOB`
+- reuse the stored sketches across multiple queries
+- merge sketches instead of rescanning the raw table
+
 ## Full Suite
 
 Run the combined benchmark entrypoint:

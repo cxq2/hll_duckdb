@@ -17,11 +17,6 @@ SELECT quack('Sam');
 ----
 Quack Sam 🐥
 
-query I
-SELECT quack_openssl_version('Michael') ILIKE 'Quack Michael, my linked OpenSSL version is OpenSSL%';
-----
-true
-
 # HLL create aggregate -> BLOB sketch
 statement ok
 CREATE TABLE raw_data AS SELECT range::VARCHAR AS id FROM range(10000);
