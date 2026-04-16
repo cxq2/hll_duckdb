@@ -1,4 +1,4 @@
-# DuckDB HLL Extension (`quack`)
+# DuckDB HLL Extension
 
 This repository contains a DuckDB extension that adds reusable HyperLogLog
 (HLL) sketches as SQL-level objects.
