@@ -3,7 +3,7 @@
 This repository contains a DuckDB extension that adds reusable HyperLogLog
 (HLL) sketches as SQL-level objects.
 
-The key difference from DuckDB's built-in approximate distinct support is that
+The key difference from DuckDB's built-in approximate distinct support and the main innovation idea is that
 this extension exposes sketches as `BLOB` values that can be:
 
 - created with `hll_create_agg(...)`
@@ -41,7 +41,23 @@ Required tools:
 - Python 3
 - Git submodule support
 
-After cloning, initialize the DuckDB submodule:
+Quick check:
+
+```bash
+cmake --version
+python3 --version
+```
+
+`cmake` should be installed and available in `PATH`.
+
+If you are using macOS with Homebrew and `cmake` is installed but not found,
+you may need:
+
+```bash
+export PATH="/opt/homebrew/bin:$PATH"
+```
+
+After finishing clone, you can initialize the DuckDB submodule:
 
 ```bash
 git submodule update --init --recursive
@@ -67,7 +83,7 @@ From the repository root:
 make -j4
 ```
 
-This produces:
+This could produce:
 
 - `build/release/duckdb`
 - `build/release/extension/quack/quack.duckdb_extension`
@@ -97,7 +113,7 @@ FROM (SELECT * FROM range(1000)) t(v);
 
 ## Benchmark And Evaluation
 
-Benchmark instructions are documented in:
+Benchmark instructions are located in:
 
 - `benchmark/README.md`
 
